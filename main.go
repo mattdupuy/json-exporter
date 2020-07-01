@@ -67,6 +67,8 @@ func probeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("jsonpath: %v", lookuppath)
+	matchvalue := params.Get("matchvalue")
+	log.Printf("matchvalue: %v", matchvalue)
 	probeSuccessGauge := prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "probe_success",
 		Help: "Displays whether or not the probe was a success",
@@ -98,13 +100,23 @@ func probeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.Printf("Found value %v", res)
-		number, ok := res.(float64)
-		if !ok {
-			http.Error(w, "Values could not be parsed to Float64", http.StatusInternalServerError)
-			return
+		var result = 0
+		if matchvalue != "" {
+			if matchvalue == res {
+				result = 1
+			}else {
+				result = 0
+			}
+		} else {
+			number, ok := res.(float64)
+			if !ok {
+				http.Error(w, "Values could not be parsed to Float64", http.StatusInternalServerError)
+				return
+			}
+			result = number
 		}
 		probeSuccessGauge.Set(1)
-		valueGauge.Set(number)
+		valueGauge.Set(result)
 	}
 
 	h := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})
