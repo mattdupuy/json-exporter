@@ -7,7 +7,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/client_golang/prometheus"
-	"crypto/tls"
+	//"crypto/tls"
 	"github.com/oliveagle/jsonpath"
 	//"io/ioutil"
 	"encoding/json"
@@ -37,14 +37,13 @@ func doOvhProbe(target string) (interface{}, error){
 	ovhClient, err :=ovh.NewEndpointClient("ovh-eu")
 	
 	if err != nil {
-		fmt.Printf("Error: %q\n", err)
+		return nil, err
 	}
 	
 	// call get function
 	bytes := []byte{}
 	err = ovhClient.Get(target, &bytes)
 	if err != nil {
-		fmt.Printf("Error: %q\n", err)
 		return nil, err
 	}
 	return bytes, nil
@@ -85,7 +84,8 @@ func probeHandler(w http.ResponseWriter, r *http.Request) {
 	bytes, err := doOvhProbe(target)
 	if err != nil {
 		log.Fatal(err)
-
+		http.Error(w, "Unable to call OVH API", http.StatusInternalServerError)
+		return
 	} else {
 		var json_data interface{}
 		json.Unmarshal([]byte(bytes), &json_data)
