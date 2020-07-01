@@ -63,7 +63,7 @@ func probeHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("target: %v", target)
 	lookuppath := params.Get("jsonpath")
 	if lookuppath == "" {
-		http.Error(w, "The JsonPath to lookup", 400)
+		http.Error(w, "JsonPath to lookup is missing", 400)
 		return
 	}
 	log.Printf("jsonpath: %v", lookuppath)
