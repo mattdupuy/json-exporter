@@ -12,7 +12,6 @@ import (
 	//"io/ioutil"
 	"encoding/json"
 	"github.com/ovh/go-ovh/ovh"
-	"github.com/go-errors/errors"
 )
 
 var addr = flag.String("web.listen-address", ":9116", "The address to listen on for HTTP requests.")
@@ -38,7 +37,7 @@ func doOvhProbe(target string) (interface{}, error){
 	ovhClient, err :=ovh.NewEndpointClient("ovh-eu")
 	
 	if err != nil {
-		fmt.Println(err.(*errors.Error).ErrorStack())
+		log.Error(err)
 		return nil, err
 	}
 	
@@ -46,13 +45,13 @@ func doOvhProbe(target string) (interface{}, error){
 	bytes := []byte{}
 	err = ovhClient.Get(target, &bytes)
 	if err != nil {
-		fmt.Println(err.(*errors.Error).ErrorStack())
+		log.Error(err)
 		return nil, err
 	}
 	var jsonData interface{}
 	err = json.Unmarshal([]byte(bytes), &jsonData)
 	if err != nil {
-		fmt.Println(err.(*errors.Error).ErrorStack())
+		log.Error(err)
 		return nil, err
 	}
 
@@ -93,7 +92,7 @@ func probeHandler(w http.ResponseWriter, r *http.Request) {
 
 	jsonData, err := doOvhProbe(target)
 	if err != nil {
-		fmt.Println(err.(*errors.Error).ErrorStack())
+		log.Error(err)
 		http.Error(w, "Unable to call OVH API", http.StatusInternalServerError)
 		return
 	} else {
