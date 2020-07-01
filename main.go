@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"flag"
 	"log"
 	"net/http"
@@ -37,15 +38,15 @@ func doOvhProbe(target string) (interface{}, error){
 	ovhClient, err :=ovh.NewEndpointClient("ovh-eu")
 	
 	if err != nil {
-		log.Printf(err)
+		fmt.Println(err)
 		return nil, err
 	}
 	
 	// call get function
-	var json_data interface{}
+	var jsonData interface{}
 	err = ovhClient.Get(target, &jsonData)
 	if err != nil {
-		log.Printf(err)
+		fmt.Println(err)
 		return nil, err
 	}
 	return jsonData, nil
@@ -61,11 +62,11 @@ func probeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("target: %v", target)
 	lookuppath := params.Get("jsonpath")
-	if target == "" {
+	if lookuppath == "" {
 		http.Error(w, "The JsonPath to lookup", 400)
 		return
 	}
-	log.Printf("jsonpath: %v", jsonpath)
+	log.Printf("jsonpath: %v", lookuppath)
 	probeSuccessGauge := prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "probe_success",
 		Help: "Displays whether or not the probe was a success",
@@ -87,7 +88,7 @@ func probeHandler(w http.ResponseWriter, r *http.Request) {
 
 	jsonData, err := doOvhProbe(target)
 	if err != nil {
-		log.Printf(err)
+		fmt.Println(err)
 		http.Error(w, "Unable to call OVH API", http.StatusInternalServerError)
 		return
 	} else {
