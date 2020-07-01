@@ -10,7 +10,7 @@ import (
 	//"crypto/tls"
 	"github.com/oliveagle/jsonpath"
 	//"io/ioutil"
-	"encoding/json"
+	//"encoding/json"
 	"github.com/ovh/go-ovh/ovh"
 )
 
@@ -37,15 +37,15 @@ func doOvhProbe(target string) (interface{}, error){
 	ovhClient, err :=ovh.NewEndpointClient("ovh-eu")
 	
 	if err != nil {
-		log.Error(err)
+		log.Printf(err)
 		return nil, err
 	}
 	
 	// call get function
-	jsonData := interface{}
+	var json_data interface{}
 	err = ovhClient.Get(target, &jsonData)
 	if err != nil {
-		log.Error(err)
+		log.Printf(err)
 		return nil, err
 	}
 	return jsonData, nil
@@ -59,13 +59,13 @@ func probeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Target parameter is missing", 400)
 		return
 	}
-	log.Info("target:" + target)
+	log.Printf("target: %v", target)
 	lookuppath := params.Get("jsonpath")
 	if target == "" {
 		http.Error(w, "The JsonPath to lookup", 400)
 		return
 	}
-	log.Info("jsonpath:" + jsonpath)
+	log.Printf("jsonpath: %v", jsonpath)
 	probeSuccessGauge := prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "probe_success",
 		Help: "Displays whether or not the probe was a success",
@@ -87,7 +87,7 @@ func probeHandler(w http.ResponseWriter, r *http.Request) {
 
 	jsonData, err := doOvhProbe(target)
 	if err != nil {
-		log.Error(err)
+		log.Printf(err)
 		http.Error(w, "Unable to call OVH API", http.StatusInternalServerError)
 		return
 	} else {
