@@ -33,7 +33,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
 
-func doOvhProbe(target string) ([]bytes{}, error){
+func doOvhProbe(target string) (interface{}, error){
 	ovhClient, err :=ovh.NewEndpointClient("ovh-eu")
 	
 	if err != nil {
@@ -46,7 +46,13 @@ func doOvhProbe(target string) ([]bytes{}, error){
 	if err != nil {
 		return nil, err
 	}
-	return bytes, nil
+	var jsonData interface{}
+	err = json.Unmarshal([]byte(bytes), &jsonData)
+	if err != nil {
+		return nil, err
+	}
+
+	return jsonData, nil
 }
 
 func probeHandler(w http.ResponseWriter, r *http.Request) {
@@ -81,15 +87,13 @@ func probeHandler(w http.ResponseWriter, r *http.Request) {
 	registry.MustRegister(probeDurationGauge)
 	registry.MustRegister(valueGauge)
 
-	bytes, err := doOvhProbe(target)
+	jsonData, err := doOvhProbe(target, w)
 	if err != nil {
 		log.Fatal(err)
 		http.Error(w, "Unable to call OVH API", http.StatusInternalServerError)
 		return
 	} else {
-		var json_data interface{}
-		json.Unmarshal([]byte(bytes), &json_data)
-		res, err := jsonpath.JsonPathLookup(json_data, lookuppath)
+		res, err := jsonpath.JsonPathLookup(jsonData, lookuppath)
 		if err != nil {
 			http.Error(w, "Jsonpath not found", http.StatusNotFound)
 			return
