@@ -42,19 +42,12 @@ func doOvhProbe(target string) (interface{}, error){
 	}
 	
 	// call get function
-	bytes := []byte{}
-	err = ovhClient.Get(target, &bytes)
+	jsonData := interface{}
+	err = ovhClient.Get(target, &jsonData)
 	if err != nil {
 		log.Error(err)
 		return nil, err
 	}
-	var jsonData interface{}
-	err = json.Unmarshal([]byte(bytes), &jsonData)
-	if err != nil {
-		log.Error(err)
-		return nil, err
-	}
-
 	return jsonData, nil
 }
 
@@ -66,11 +59,13 @@ func probeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Target parameter is missing", 400)
 		return
 	}
+	log.Info("target:" + target)
 	lookuppath := params.Get("jsonpath")
 	if target == "" {
 		http.Error(w, "The JsonPath to lookup", 400)
 		return
 	}
+	log.Info("jsonpath:" + jsonpath)
 	probeSuccessGauge := prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "probe_success",
 		Help: "Displays whether or not the probe was a success",
