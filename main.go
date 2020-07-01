@@ -33,7 +33,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
 
-func doOvhProbe(target string) (interface{}, error){
+func doOvhProbe(target string) ([]bytes{}, error){
 	ovhClient, err :=ovh.NewEndpointClient("ovh-eu")
 	
 	if err != nil {
