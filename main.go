@@ -100,7 +100,7 @@ func probeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.Printf("Found value %v", res)
-		var result = 0
+		var result float64 = 0
 		if matchvalue != "" {
 			if matchvalue == res {
 				result = 1
