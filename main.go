@@ -9,11 +9,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"crypto/tls"
 	"github.com/oliveagle/jsonpath"
-	"io/ioutil"
+	//"io/ioutil"
 	"encoding/json"
+	"github.com/ovh/go-ovh/ovh"
 )
 
-var addr = flag.String("listen-address", ":9116", "The address to listen on for HTTP requests.")
+var addr = flag.String("web.listen-address", ":9116", "The address to listen on for HTTP requests.")
 
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -30,6 +31,23 @@ func main() {
 	http.HandleFunc("/probe", probeHandler)
 	http.Handle("/metrics", promhttp.Handler())
 	log.Fatal(http.ListenAndServe(*addr, nil))
+}
+
+func doOvhProbe(target string) (interface{}, error){
+	ovhClient, err :=ovh.NewEndpointClient("ovh-eu")
+	
+	if err != nil {
+		fmt.Printf("Error: %q\n", err)
+	}
+	
+	// call get function
+	bytes := []byte{}
+	err = ovhClient.Get(target, &bytes)
+	if err != nil {
+		fmt.Printf("Error: %q\n", err)
+		return nil, err
+	}
+	return bytes, nil
 }
 
 func probeHandler(w http.ResponseWriter, r *http.Request) {
@@ -64,22 +82,11 @@ func probeHandler(w http.ResponseWriter, r *http.Request) {
 	registry.MustRegister(probeDurationGauge)
 	registry.MustRegister(valueGauge)
 
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-	resp, err := client.Get(target)
+	bytes, err := doOvhProbe(target)
 	if err != nil {
 		log.Fatal(err)
 
 	} else {
-		defer resp.Body.Close()
-		bytes, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
 		var json_data interface{}
 		json.Unmarshal([]byte(bytes), &json_data)
 		res, err := jsonpath.JsonPathLookup(json_data, lookuppath)
