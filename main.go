@@ -87,7 +87,7 @@ func probeHandler(w http.ResponseWriter, r *http.Request) {
 	registry.MustRegister(probeDurationGauge)
 	registry.MustRegister(valueGauge)
 
-	jsonData, err := doOvhProbe(target, w)
+	jsonData, err := doOvhProbe(target)
 	if err != nil {
 		log.Fatal(err)
 		http.Error(w, "Unable to call OVH API", http.StatusInternalServerError)
